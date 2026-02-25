@@ -1,0 +1,6 @@
+name = "jinghua-api"
+main = "worker/index.js"
+compatibility_date = "2025-01-01"
+
+# 环境变量（在 Cloudflare Dashboard 或 wrangler secret 中设置）
+# API_KEY = "sk-xxx"
