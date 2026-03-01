@@ -1,0 +1,401 @@
+/**
+ * [INPUT]: 依赖 globals.css CSS 变量
+ * [OUTPUT]: 开场页全部样式——暗色都市APP启动 + NPC约会档案 + 玩家姓名输入
+ * [POS]: styles 的开场专用样式，暗色霓虹+约会APP仿真
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
+/* ================================================================
+   跳过按钮 — 右上角固定
+   ================================================================ */
+
+.jh-skip-btn {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 10;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.jh-skip-btn:active {
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ================================================================
+   Phase 0: 首屏 — APP 启动画面
+   暗色都市 + "镜花缘" logo + 霓虹光效 + 粒子
+   ================================================================ */
+
+.jh-landing {
+  position: fixed; inset: 0; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 50% 30%, #1a0a2e, #0d0d1a 70%, #050510);
+}
+
+/* 霓虹光晕背景 */
+.jh-landing-glow {
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
+}
+.jh-landing-glow::before {
+  content: '';
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  width: 300px; height: 300px;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, rgba(232, 67, 147, 0.15) 0%, transparent 70%);
+  animation: jhNeonPulse 4s ease-in-out infinite;
+}
+.jh-landing-glow::after {
+  content: '';
+  position: absolute;
+  bottom: 25%;
+  left: 50%;
+  width: 400px; height: 200px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse, rgba(162, 155, 254, 0.1) 0%, transparent 70%);
+  animation: jhNeonPulse 5s ease-in-out infinite 1s;
+}
+
+@keyframes jhNeonPulse {
+  0%, 100% { opacity: 0.4; transform: translateX(-50%) scale(0.9); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+}
+
+/* 粒子 */
+.jh-landing-particles {
+  position: absolute; inset: 0; pointer-events: none; z-index: 1;
+}
+.jh-landing-particle {
+  position: absolute; border-radius: 50%;
+  background: radial-gradient(circle, rgba(232, 67, 147, 0.6) 0%, transparent 70%);
+  animation: jhParticleFloat linear infinite;
+}
+@keyframes jhParticleFloat {
+  0% { opacity: 0; transform: translateY(0) scale(0.3); }
+  15% { opacity: 0.8; }
+  85% { opacity: 0.8; }
+  100% { opacity: 0; transform: translateY(-100px) scale(0.6); }
+}
+
+/* 主内容区 */
+.jh-landing-content {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 0 32px;
+}
+
+/* 装饰线 */
+.jh-landing-line {
+  width: 40px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(232, 67, 147, 0.6), transparent);
+  margin-bottom: 20px;
+}
+
+/* Logo */
+.jh-landing-logo {
+  font-size: 36px; font-weight: 800; letter-spacing: 8px;
+  color: #fff;
+  text-shadow:
+    0 0 40px rgba(232, 67, 147, 0.4),
+    0 0 80px rgba(162, 155, 254, 0.2),
+    0 2px 4px rgba(0, 0, 0, 0.5);
+  margin-bottom: 10px;
+}
+
+/* 副标题 */
+.jh-landing-sub {
+  font-size: 12px; letter-spacing: 12px;
+  color: rgba(232, 67, 147, 0.7);
+  text-shadow: 0 0 12px rgba(232, 67, 147, 0.3);
+  margin-bottom: 12px;
+}
+
+/* Slogan */
+.jh-landing-slogan {
+  font-size: 12px; letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.35);
+  margin-bottom: 48px;
+  text-align: center;
+}
+
+/* 按钮组 */
+.jh-landing-actions {
+  width: 100%; max-width: 280px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+/* 开始按钮 — 霓虹粉边框 */
+.jh-landing-start {
+  width: 100%; padding: 14px 0;
+  border: none; border-radius: 50px;
+  background: linear-gradient(135deg, rgba(232, 67, 147, 0.2), rgba(162, 155, 254, 0.15));
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(232, 67, 147, 0.3);
+  color: #FFFFFF; font-size: 15px; font-weight: 600;
+  letter-spacing: 3px; cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 0 20px rgba(232, 67, 147, 0.15);
+}
+.jh-landing-start:active {
+  transform: scale(0.97);
+  background: linear-gradient(135deg, rgba(232, 67, 147, 0.35), rgba(162, 155, 254, 0.25));
+}
+
+/* 继续按钮 */
+.jh-landing-continue {
+  width: 100%; padding: 13px 0;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 14px; font-weight: 500; letter-spacing: 2px; cursor: pointer;
+  transition: all 0.2s;
+}
+.jh-landing-continue:active {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ================================================================
+   Phase 1: NPC 档案卡片 — 约会APP风格
+   暗色 + 全屏卡片 + 头像 + 标签
+   ================================================================ */
+
+.jh-profiles {
+  position: fixed; inset: 0; overflow: hidden;
+  display: flex; flex-direction: column;
+  background: #0d0d1a;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+
+/* 顶部导航 — APP 风格 */
+.jh-profiles-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  background: rgba(13, 13, 26, 0.95);
+  border-bottom: 1px solid rgba(232, 67, 147, 0.1);
+}
+.jh-profiles-nav-logo {
+  font-size: 16px; font-weight: 700; letter-spacing: 2px;
+  color: #e84393;
+  text-shadow: 0 0 8px rgba(232, 67, 147, 0.3);
+}
+.jh-profiles-nav-hint {
+  font-size: 11px; color: rgba(255, 255, 255, 0.3);
+}
+
+/* 卡片容器 */
+.jh-profiles-stack {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  position: relative;
+}
+
+/* 单张卡片 */
+.jh-profile-card {
+  width: 100%; max-width: 360px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #1a1520;
+  border: 1px solid rgba(232, 67, 147, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  position: relative;
+}
+
+/* 卡片图片区 */
+.jh-profile-card-img {
+  width: 100%;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
+/* 卡片信息区叠加在图片底部 */
+.jh-profile-card-overlay {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 48px 20px 20px;
+  background: linear-gradient(transparent, rgba(13, 13, 26, 0.9) 50%, #0d0d1a);
+}
+
+/* 卡片名字 */
+.jh-profile-card-name {
+  font-size: 24px; font-weight: 700;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+/* 卡片副标题 */
+.jh-profile-card-title {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 10px;
+}
+
+/* 卡片简介 */
+.jh-profile-card-desc {
+  font-size: 13px; line-height: 1.6;
+  color: rgba(255, 255, 255, 0.65);
+  margin-bottom: 12px;
+}
+
+/* 卡片标签 */
+.jh-profile-card-tags {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.jh-profile-card-tag {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  background: rgba(232, 67, 147, 0.12);
+  border: 1px solid rgba(232, 67, 147, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* 底部进度指示器 */
+.jh-profiles-dots {
+  display: flex; justify-content: center; gap: 6px;
+  padding: 16px 0 24px;
+}
+.jh-profiles-dot {
+  width: 6px; height: 6px; border-radius: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  transition: all 0.3s;
+}
+.jh-profiles-dot-active {
+  width: 18px;
+  background: #e84393;
+  box-shadow: 0 0 8px rgba(232, 67, 147, 0.4);
+}
+
+/* 底部CTA — 全部看完后出现 */
+.jh-profiles-cta-wrap {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 16px 24px 32px;
+  background: linear-gradient(transparent, #0d0d1a 50%);
+}
+.jh-profiles-cta {
+  width: 100%; padding: 14px;
+  border: none; border-radius: 50px;
+  background: linear-gradient(135deg, #e84393, #a29bfe);
+  color: white; font-size: 15px; font-weight: 600;
+  letter-spacing: 2px; cursor: pointer;
+  box-shadow: 0 4px 20px rgba(232, 67, 147, 0.3);
+  transition: transform 0.15s;
+}
+.jh-profiles-cta:active { transform: scale(0.97); }
+
+/* ================================================================
+   Phase 2: 玩家档案创建 — 暗色表单
+   ================================================================ */
+
+.jh-register {
+  position: fixed; inset: 0; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 50% 40%, #1a0a2e 0%, #0d0d1a 60%, #050510 100%);
+  padding: 24px;
+}
+
+/* 暗色粒子 */
+.jh-register-particles {
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
+}
+.jh-register-spark {
+  position: absolute; border-radius: 50%;
+  background: radial-gradient(circle, rgba(162, 155, 254, 0.4) 0%, transparent 70%);
+  animation: jhSparkFloat linear infinite;
+}
+@keyframes jhSparkFloat {
+  0% { opacity: 0; transform: translateY(0) scale(0.3); }
+  20% { opacity: 0.6; }
+  80% { opacity: 0.6; }
+  100% { opacity: 0; transform: translateY(-80px) scale(0.7); }
+}
+
+/* 注册卡片 */
+.jh-register-card {
+  position: relative; z-index: 1;
+  width: 340px; max-width: calc(100vw - 48px);
+  background: rgba(26, 21, 32, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(232, 67, 147, 0.15);
+  border-radius: 20px; padding: 28px 24px 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 60px rgba(232, 67, 147, 0.05);
+}
+
+.jh-register-header {
+  text-align: center; margin-bottom: 24px;
+}
+.jh-register-title {
+  font-size: 18px; font-weight: 700; letter-spacing: 3px;
+  color: #e84393;
+  text-shadow: 0 0 12px rgba(232, 67, 147, 0.3);
+}
+.jh-register-subtitle {
+  font-size: 11px; letter-spacing: 4px;
+  color: rgba(162, 155, 254, 0.6); margin-top: 6px;
+}
+.jh-register-divider {
+  height: 1px; margin: 16px 0;
+  background: linear-gradient(90deg, transparent, rgba(232, 67, 147, 0.2), transparent);
+}
+
+/* 表单字段 */
+.jh-register-field {
+  margin-bottom: 16px;
+}
+.jh-register-label {
+  font-size: 10px; letter-spacing: 3px; font-weight: 600;
+  color: rgba(162, 155, 254, 0.6); margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.jh-register-value {
+  font-size: 14px; color: rgba(255, 255, 255, 0.65); line-height: 1.5;
+}
+.jh-register-input {
+  width: 100%; padding: 10px 0;
+  background: transparent; border: none;
+  border-bottom: 1.5px solid rgba(232, 67, 147, 0.25);
+  color: #e84393; font-size: 18px; font-weight: 600;
+  letter-spacing: 2px; outline: none;
+  transition: border-color 0.3s;
+}
+.jh-register-input::placeholder {
+  color: rgba(162, 155, 254, 0.35); font-size: 14px; font-weight: 400;
+}
+.jh-register-input:focus {
+  border-color: #e84393;
+  box-shadow: 0 2px 8px rgba(232, 67, 147, 0.15);
+}
+
+.jh-register-warn {
+  display: flex; gap: 6px; align-items: flex-start;
+  padding: 10px 12px; border-radius: 12px;
+  background: rgba(232, 67, 147, 0.06);
+  border: 1px solid rgba(232, 67, 147, 0.12);
+  font-size: 12px; line-height: 1.5;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 16px;
+}
+
+/* CTA */
+.jh-register-cta {
+  width: 100%; padding: 14px; margin-top: 20px;
+  border: none; border-radius: 50px;
+  background: linear-gradient(135deg, #e84393, #a29bfe);
+  color: white; font-size: 15px; font-weight: 700;
+  letter-spacing: 3px; cursor: pointer;
+  box-shadow: 0 4px 20px rgba(232, 67, 147, 0.25);
+  transition: transform 0.15s;
+}
+.jh-register-cta:active { transform: scale(0.97); }
+.jh-register-cta:disabled { opacity: 0.3; cursor: not-allowed; }

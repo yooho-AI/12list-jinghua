@@ -1,26 +1,21 @@
-# components/game/ — 游戏 UI 组件
+# components/game/ — 游戏UI组件层
 
 L2 | 父级: /12list-jinghua/CLAUDE.md
 
 ## 成员清单
 
-- `character-panel.tsx`: PC 端左侧面板，场景卡片/角色立绘/角色信息(StatMeta 驱动)/玩家属性(sincerity/karma/confidence)/角色列表
-- `dialogue-panel.tsx`: PC 端中间对话面板，LetterCard 介绍信/消息列表/流式消息/输入区+背包入口
-- `side-panel.tsx`: PC 端右侧面板，背包(道具使用)/关系总览/导航按钮
-- `mobile-layout.tsx`: 移动端全屏布局，MobileHeader/MobileDialogue/MobileInputBar/CharacterSheet/InventorySheet/MobileMenu/EndingSheet/HighlightModal
-- `highlight-modal.tsx`: 高光时刻弹窗，5阶段(分析→选择→风格→生成→结果)，主色 #e84393，暗色主题
+- `app-shell.tsx`: 桌面居中壳 + Header(Day+时段+章节+🎵+☰) + 三向手势(dx>60px) + Tab路由(AnimatePresence) + TabBar(5键: Notebook/ChatCircleDots/MapTrifold/Users/Scroll) + DashboardDrawer + RecordSheet(右滑入时间线) + Toast
+- `dashboard-drawer.tsx`: 镜花手账(左抽屉)：扉页+玩家属性Pills+角色横向轮播+场景缩略图+章节目标+道具网格+迷你播放器。Reorder拖拽排序 + localStorage `jh-dash-order` 持久化
+- `tab-dialogue.tsx`: 对话Tab：富消息路由(LetterCard/SceneCard/DayCard/NpcBubble/PlayerBubble/SystemBubble/StreamingMessage) + CollapsibleChoices(收起/展开/自动收起) + InputArea + InventorySheet
+- `tab-scene.tsx`: 场景Tab：9:16大图(Ken Burns) + 场景描述 + 地点列表(locked/unlocked/current)
+- `tab-character.tsx`: 人物Tab：当前角色立绘 + 玩家属性面板 + NPC好感列表 + SVG RelationGraph(环形+立绘节点) + 角色网格 + CharacterDossier(全屏右滑+50vh呼吸动画+数值条)
 
 ## 依赖关系
 
-- 全部依赖 `@/lib/store` 的 useGameStore
-- `highlight-modal.tsx` 额外依赖 `@/lib/highlight` 全部导出
-- `dialogue-panel.tsx` 额外依赖 `@/lib/parser` 的 parseStoryParagraph
-- `mobile-layout.tsx` 额外依赖 `@/lib/parser` + `@/lib/bgm` + `highlight-modal`
-
-## 样式约定
-
-- CSS class 前缀: `jh-`
-- 主题色: #e84393 (都市粉), 暗色背景 #0d0d1a/#1a1520
-- 动画: jh-fadeSlideIn, jh-bounce, jh-ink-pulse
+- 所有组件 → `store.ts`（通过 useGameStore + re-exported 常量/类型）
+- `app-shell.tsx` → `dashboard-drawer.tsx` + `tab-*.tsx`
+- `tab-dialogue.tsx` → `parseStoryParagraph`（从 store re-export）
+- 全部图标：`@phosphor-icons/react`（Notebook/Scroll/MusicNotes/List/ChatCircleDots/MapTrifold/Users/Backpack/PaperPlaneRight/GameController/CaretUp/CaretDown）
+- CSS 前缀：`jh-`
 
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md

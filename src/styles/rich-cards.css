@@ -1,0 +1,374 @@
+/* ================================================================
+ * 镜花缘 — rich-cards.css
+ * 富UI组件：场景卡/日期卡/NPC气泡/Dashboard/RecordSheet/角色档案/关系图/Toast/背包
+ * ================================================================ */
+
+/* ── 1. Scene Transition Card ─────────────────────────── */
+.jh-scene-card {
+  position: relative; width: 100%; height: 200px;
+  border-radius: 16px; overflow: hidden; margin-bottom: 8px;
+}
+.jh-scene-card img {
+  width: 100%; height: 100%; object-fit: cover;
+  animation: jhKenBurns 8s ease-in-out infinite alternate;
+}
+.jh-scene-card-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(transparent 35%, rgba(13, 13, 26, 0.7));
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 16px; color: white;
+}
+.jh-scene-card-name {
+  font-size: 18px; font-weight: 700; letter-spacing: 1px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+.jh-scene-card-atmo { font-size: 12px; opacity: 0.8; margin-top: 3px; }
+.jh-scene-card-badge {
+  position: absolute; top: 12px; right: 12px;
+  background: var(--primary); color: white;
+  font-size: 10px; font-weight: 600; padding: 3px 10px;
+  border-radius: 10px; letter-spacing: 1px;
+  box-shadow: 0 2px 8px rgba(232, 67, 147, 0.4);
+}
+@keyframes jhKenBurns { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
+
+/* ── 2. Day Change Card ───────────────────────────────── */
+.jh-day-card {
+  align-self: center; width: fit-content; max-width: 85%;
+  margin-bottom: 8px; text-align: center; position: relative;
+  background: linear-gradient(135deg, rgba(26, 21, 32, 0.9), rgba(13, 13, 26, 0.95));
+  border: 1px solid rgba(232, 67, 147, 0.12);
+  border-radius: 0 0 16px 16px; padding: 24px 32px 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  animation: jhDaySlide 0.5s ease-out;
+}
+.jh-day-card::before {
+  content: ''; position: absolute; top: -6px; left: 0; right: 0; height: 6px;
+  background: repeating-linear-gradient(90deg,
+    transparent 0px, transparent 8px,
+    rgba(232, 67, 147, 0.1) 8px, rgba(232, 67, 147, 0.1) 10px,
+    transparent 10px, transparent 18px);
+}
+.jh-day-number {
+  font-size: 28px; font-weight: 800; color: var(--primary);
+  letter-spacing: 3px; text-shadow: 0 0 16px rgba(232, 67, 147, 0.3);
+}
+.jh-day-period { font-size: 14px; color: var(--primary); margin-top: 4px; font-weight: 500; }
+.jh-day-chapter { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+@keyframes jhDaySlide { 0% { opacity: 0; transform: translateY(-20px); } 100% { opacity: 1; transform: translateY(0); } }
+
+/* ── 3. NPC Avatar Bubble ─────────────────────────────── */
+.jh-npc-row {
+  display: flex; align-items: flex-end; gap: 8px;
+  margin-bottom: 8px; max-width: 90%; align-self: flex-start;
+}
+.jh-npc-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  object-fit: cover; object-position: center top;
+  border: 2px solid; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(232, 67, 147, 0.15);
+}
+.jh-npc-bubble {
+  padding: 12px 16px;
+  background: rgba(26, 21, 32, 0.85);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(232, 67, 147, 0.06);
+  border-radius: 4px 18px 18px 18px;
+  font-size: 14px; line-height: 1.7;
+  color: var(--text-primary); min-width: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.jh-npc-bubble .stat-changes {
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px solid rgba(232, 67, 147, 0.1);
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.jh-npc-bubble .stat-change {
+  font-size: 12px; font-weight: 600; padding: 2px 8px;
+  border-radius: 8px; background: rgba(232, 67, 147, 0.06);
+}
+
+/* ── 4. Dashboard Drawer ──────────────────────────────── */
+.jh-dash-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 50; }
+.jh-dash-drawer {
+  position: absolute; top: 0; left: 0; bottom: 0;
+  width: 85vw; max-width: 380px;
+  background: linear-gradient(180deg, rgba(18, 14, 28, 0.98) 0%, rgba(13, 13, 26, 0.98) 100%);
+  display: flex; flex-direction: column;
+  box-shadow: 4px 0 32px rgba(0, 0, 0, 0.3);
+}
+.jh-dash-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; border-bottom: 1px solid rgba(232, 67, 147, 0.08);
+}
+.jh-dash-title { font-size: 15px; font-weight: 700; color: var(--primary); letter-spacing: 1px; }
+.jh-dash-close {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05); border: none;
+  font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+}
+.jh-dash-scroll {
+  flex: 1; overflow-y: auto; padding: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+.jh-dash-scroll::-webkit-scrollbar { width: 3px; }
+.jh-dash-scroll::-webkit-scrollbar-thumb { background: rgba(232, 67, 147, 0.15); border-radius: 3px; }
+.jh-dash-section {
+  background: rgba(26, 21, 32, 0.6);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(232, 67, 147, 0.05);
+  border-radius: 16px; padding: 12px; margin-bottom: 10px;
+}
+.jh-dash-section-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+}
+.jh-dash-section-title {
+  font-size: 11px; font-weight: 600; color: var(--text-muted);
+  letter-spacing: 2px; text-transform: uppercase;
+}
+.jh-dash-grip {
+  color: rgba(255, 255, 255, 0.15); cursor: grab; padding: 4px;
+  user-select: none; touch-action: none; display: flex; align-items: center;
+}
+
+/* dash front page */
+.jh-dash-front {
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(232, 67, 147, 0.04);
+  border: 1px solid rgba(232, 67, 147, 0.08);
+  border-radius: 16px; padding: 12px 14px; margin-bottom: 12px;
+}
+.jh-dash-front-left { display: flex; align-items: center; gap: 10px; }
+.jh-dash-front-badge {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(135deg, #e84393, #a29bfe);
+  color: white; font-size: 18px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; box-shadow: 0 2px 10px rgba(232, 67, 147, 0.3);
+}
+.jh-dash-front-meta { display: flex; flex-direction: column; gap: 2px; }
+.jh-dash-front-period { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+.jh-dash-front-chapter { font-size: 11px; color: var(--text-muted); }
+.jh-dash-front-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.jh-dash-front-ap { font-size: 12px; font-weight: 600; color: var(--primary); }
+
+/* dash scene thumbnails */
+.jh-dash-scene-scroll {
+  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.jh-dash-scene-scroll::-webkit-scrollbar { display: none; }
+.jh-dash-scene-thumb {
+  flex-shrink: 0; width: 80px; height: 60px;
+  border-radius: 10px; overflow: hidden; position: relative;
+  border: 2px solid transparent; cursor: pointer;
+  background: none; padding: 0; transition: border-color 0.2s;
+}
+.jh-dash-scene-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.jh-dash-scene-label {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  font-size: 10px; font-weight: 600; color: white;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+  padding: 8px 4px 3px; text-align: center;
+}
+.jh-dash-scene-active { border-color: var(--primary); box-shadow: 0 0 10px rgba(232, 67, 147, 0.25); }
+.jh-dash-scene-locked { opacity: 0.5; cursor: not-allowed; }
+.jh-dash-scene-locked img { filter: blur(3px); }
+
+/* dash stat pills + item grid */
+.jh-dash-stat-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.jh-dash-stat-pill {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 4px 10px; border-radius: 20px;
+  font-size: 12px; font-weight: 600; border: 1px solid;
+}
+.jh-dash-item-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+.jh-dash-item-cell {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 8px 4px; background: rgba(232, 67, 147, 0.03);
+  border-radius: 12px; position: relative;
+}
+.jh-dash-item-count {
+  position: absolute; top: 2px; right: 4px;
+  font-size: 9px; color: var(--primary); font-weight: 600;
+}
+.jh-dash-empty { text-align: center; padding: 12px; font-size: 12px; color: var(--text-muted); }
+
+/* dash mini music player */
+.jh-dash-mini-player {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid rgba(232, 67, 147, 0.05);
+  background: rgba(232, 67, 147, 0.02);
+}
+.jh-dash-mini-note { font-size: 14px; color: var(--primary); }
+.jh-dash-mini-title { flex: 1; font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+.jh-dash-mini-btn {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--primary); border: none; color: white;
+  font-size: 11px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── 5. Record Sheet ──────────────────────────────────── */
+.jh-records-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 50; }
+.jh-records-sheet {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 51;
+  width: 85vw; max-width: 380px; background: rgba(13, 13, 26, 0.98);
+  display: flex; flex-direction: column;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.3);
+}
+.jh-records-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; border-bottom: 1px solid rgba(232, 67, 147, 0.08);
+}
+.jh-records-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.jh-records-close {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05); border: none;
+  font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+}
+.jh-records-timeline { flex: 1; overflow-y: auto; padding: 12px 16px; position: relative; }
+.jh-records-timeline::before {
+  content: ''; position: absolute; top: 0; left: 28px; bottom: 0;
+  width: 2px; background: rgba(232, 67, 147, 0.12);
+}
+.jh-records-item { display: flex; gap: 12px; padding: 10px 0; position: relative; }
+.jh-records-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--primary);
+  flex-shrink: 0; margin-top: 4px;
+  box-shadow: 0 0 6px rgba(232, 67, 147, 0.4); z-index: 1;
+}
+.jh-records-body { flex: 1; min-width: 0; }
+.jh-records-meta { font-size: 10px; color: var(--text-muted); }
+.jh-records-event-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-top: 2px; }
+.jh-records-content { font-size: 12px; color: var(--text-secondary); margin-top: 2px; line-height: 1.5; }
+
+/* ── 6. Character Dossier ─────────────────────────────── */
+.jh-dossier-overlay { position: fixed; inset: 0; z-index: 52; background: var(--bg-base); overflow-y: auto; }
+.jh-dossier-portrait { position: relative; width: 100%; height: 50vh; overflow: hidden; }
+.jh-dossier-portrait img {
+  width: 100%; height: 100%; object-fit: cover;
+  object-position: center top; animation: jhBreathe 6s ease-in-out infinite;
+}
+@keyframes jhBreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+.jh-dossier-gradient {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 140px;
+  background: linear-gradient(transparent, var(--bg-base));
+}
+.jh-dossier-close {
+  position: absolute; top: 12px; right: 12px; width: 36px; height: 36px;
+  border-radius: 50%; background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px); border: none; color: white;
+  font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.jh-dossier-content { padding: 0 20px 40px; margin-top: -40px; position: relative; }
+.jh-dossier-name { font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+.jh-dossier-subtitle { font-size: 13px; color: var(--primary); margin-bottom: 4px; font-weight: 500; }
+.jh-dossier-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 20px; }
+.jh-dossier-stats { margin-bottom: 20px; }
+.jh-dossier-stat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.jh-dossier-stat-label { font-size: 12px; color: var(--text-secondary); width: 56px; flex-shrink: 0; }
+.jh-dossier-stat-track { flex: 1; height: 6px; background: rgba(255, 255, 255, 0.06); border-radius: 3px; overflow: hidden; }
+.jh-dossier-stat-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  animation: jhStatGrow 0.8s ease-out forwards; transform-origin: left;
+}
+.jh-dossier-stat-row:nth-child(1) .jh-dossier-stat-fill { animation-delay: 0s; }
+.jh-dossier-stat-row:nth-child(2) .jh-dossier-stat-fill { animation-delay: 0.1s; }
+.jh-dossier-stat-row:nth-child(3) .jh-dossier-stat-fill { animation-delay: 0.2s; }
+@keyframes jhStatGrow { 0% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+.jh-dossier-stat-val { font-size: 11px; font-weight: 600; color: var(--primary); width: 28px; text-align: right; flex-shrink: 0; }
+.jh-dossier-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+.jh-dossier-tag {
+  font-size: 11px; padding: 3px 12px; border-radius: 10px;
+  background: rgba(232, 67, 147, 0.08); color: var(--primary);
+  border: 1px solid rgba(232, 67, 147, 0.15); font-weight: 500;
+}
+
+/* ── 7. Relation Graph ────────────────────────────────── */
+.jh-relation-wrap { width: 100%; max-width: 380px; margin: 0 auto 16px; }
+.jh-relation-svg { width: 100%; height: 300px; }
+.jh-relation-svg svg { display: block; width: 100%; height: 100%; }
+.jh-relation-center { font-size: 14px; font-weight: 700; fill: var(--primary); }
+.jh-relation-node-name { font-size: 10px; fill: var(--text-secondary); text-anchor: middle; }
+.jh-relation-line { stroke: rgba(232, 67, 147, 0.2); stroke-width: 1; }
+.jh-relation-label { font-size: 9px; fill: rgba(232, 67, 147, 0.6); text-anchor: middle; }
+
+/* ── 8. Letter Card ───────────────────────────────────── */
+.jh-letter {
+  position: relative; align-self: center; width: 92%; max-width: 340px;
+  background: rgba(26, 21, 32, 0.8);
+  border: 1px solid rgba(232, 67, 147, 0.12);
+  border-radius: 14px; padding: 24px 20px;
+  margin-bottom: 12px; overflow: hidden;
+}
+.jh-letter::before {
+  content: ''; position: absolute;
+  top: 8px; left: 8px; right: 8px; bottom: 8px;
+  border: 1px dashed rgba(232, 67, 147, 0.1);
+  border-radius: 10px; pointer-events: none;
+}
+.jh-letter-watermark {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 80px; opacity: 0.03; pointer-events: none;
+}
+.jh-letter-title {
+  font-size: 16px; font-weight: 700; color: var(--primary);
+  text-align: center; margin-bottom: 12px; letter-spacing: 1px;
+}
+.jh-letter-body { font-size: 13px; color: var(--text-secondary); line-height: 1.8; font-style: italic; }
+.jh-letter-sign { font-size: 12px; color: var(--primary); text-align: right; margin-top: 16px; font-weight: 500; }
+
+/* ── 9. Inventory Sheet ───────────────────────────────── */
+.jh-inventory-overlay {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 55;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.jh-inventory-sheet {
+  width: 100%; max-width: 480px; max-height: 60vh;
+  background: linear-gradient(180deg, rgba(26, 21, 32, 0.98), rgba(13, 13, 26, 0.98));
+  border-radius: 20px 20px 0 0;
+  display: flex; flex-direction: column;
+  animation: jhSheetUp 0.3s ease-out;
+}
+@keyframes jhSheetUp { 0% { transform: translateY(100%); } 100% { transform: translateY(0); } }
+.jh-inventory-handle { width: 36px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.1); margin: 10px auto; }
+.jh-inventory-header {
+  display: flex; align-items: center; justify-content: space-between; padding: 4px 16px 12px;
+}
+.jh-inventory-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.jh-inventory-close {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05); border: none;
+  font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+}
+.jh-inventory-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 8px; padding: 0 16px 24px; overflow-y: auto;
+}
+.jh-inventory-item {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; padding: 12px 8px;
+  background: rgba(232, 67, 147, 0.03);
+  border: 1px solid rgba(232, 67, 147, 0.06);
+  border-radius: 14px; position: relative;
+  cursor: pointer; transition: background 0.15s;
+}
+.jh-inventory-item:active { background: rgba(232, 67, 147, 0.08); }
+.jh-inventory-icon { font-size: 28px; }
+.jh-inventory-name { font-size: 11px; color: var(--text-secondary); font-weight: 500; text-align: center; }
+.jh-inventory-count {
+  position: absolute; top: 4px; right: 6px;
+  font-size: 10px; font-weight: 600; color: var(--primary);
+  background: rgba(232, 67, 147, 0.08); padding: 1px 6px; border-radius: 6px;
+}

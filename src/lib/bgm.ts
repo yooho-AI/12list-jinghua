@@ -1,7 +1,7 @@
 /**
  * [INPUT]: 无外部依赖
  * [OUTPUT]: 对外提供 useBgm hook
- * [POS]: lib 的音频管理模块，被 App.tsx 和 mobile-layout.tsx 消费
+ * [POS]: lib 的音频管理模块，被 App.tsx 和 app-shell.tsx/dashboard-drawer.tsx 消费
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
@@ -73,4 +73,28 @@ export function useBgm() {
   }, [])
 
   return { isPlaying, toggle }
+}
+
+// ── Standalone functions (for non-hook contexts) ──
+
+export function initBGM() {
+  if (globalAudio) return
+  const audio = new Audio(BGM_URL)
+  audio.loop = true
+  audio.volume = BGM_VOLUME
+  audio.preload = 'auto'
+  audio.oncanplaythrough = () => {
+    globalAudio = audio
+    if (!hasAutoPlayed) {
+      hasAutoPlayed = true
+      audio.play().catch(() => {})
+    }
+  }
+}
+
+export function toggleBGM() {
+  const audio = globalAudio
+  if (!audio) { initBGM(); return }
+  if (audio.paused) audio.play().catch(() => {})
+  else audio.pause()
 }

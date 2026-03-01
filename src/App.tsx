@@ -1,443 +1,435 @@
 /**
- * [INPUT]: 依赖 @/lib/store, @/lib/hooks, @/lib/bgm, framer-motion, 游戏组件
- * [OUTPUT]: 对外提供 App 根组件（独立 SPA，无路由依赖）
- * [POS]: 镜花缘项目入口，StartScreen ↔ GameScreen 状态切换
+ * [INPUT]: 依赖 store.ts 状态，styles/*.css
+ * [OUTPUT]: 对外提供 App 根组件
+ * [POS]: 根组件: 三阶段开场(APP启动→NPC档案卡→玩家注册) + GameScreen + EndingModal + MenuOverlay
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 
-import { useState, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useGameStore, ENDINGS, PERIODS, MAX_DAYS, PLAYER_STAT_METAS } from '@/lib/store'
-import { useIsMobile } from '@/lib/hooks'
-import { useBgm } from '@/lib/bgm'
-import DialoguePanel from '@/components/game/dialogue-panel'
-import LeftPanel from '@/components/game/character-panel'
-import RightPanel from '@/components/game/side-panel'
-import MobileGameLayout from '@/components/game/mobile-layout'
-import '@/styles/globals.css'
+import { useState, useEffect, useCallback } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useGameStore, ENDINGS, ENDING_TYPE_MAP, STORY_INFO } from '@/lib/store'
+import { trackGameStart, trackGameContinue } from '@/lib/analytics'
+import { initBGM } from '@/lib/bgm'
+import AppShell from '@/components/game/app-shell'
+import './styles/globals.css'
+import './styles/opening.css'
+import './styles/rich-cards.css'
 
-// ============================================================
-// NPC 预览数据 — 开始画面用，与 store 解耦
-// ============================================================
+// ── NPC 档案卡数据 ──────────────────────────────────
 
-const NPC_PREVIEW = [
-  { id: 'qingrang', name: '沈清让', color: '#a29bfe', icon: '🎨', role: '温柔艺术家' },
-  { id: 'linyuan', name: '顾临渊', color: '#e17055', icon: '💼', role: '霸道总裁' },
-  { id: 'xiaolu', name: '林小鹿', color: '#00b894', icon: '🦌', role: '阳光学弟' },
-  { id: 'chenzhou', name: '陆沉舟', color: '#74b9ff', icon: '🍵', role: '神秘大叔' },
-] as const
+const NPC_PROFILES = [
+  {
+    name: '沈清让', title: '温柔艺术家 · 32岁',
+    desc: '画廊策展人，温润如玉的文艺青年。保持距离感的温柔背后，是极度害怕被抛弃的心。',
+    portrait: '/characters/qingrang.jpg',
+    tags: ['文艺', '温柔', '距离感'],
+    color: '#a29bfe',
+  },
+  {
+    name: '顾临渊', title: '霸道总裁 · 35岁',
+    desc: '创业公司CEO，霸道自信的掌控者。用强势保护自己，内心是受伤的孩子。',
+    portrait: '/characters/linyuan.jpg',
+    tags: ['霸道', '商务', '危险'],
+    color: '#e17055',
+  },
+  {
+    name: '林小鹿', title: '阳光学弟 · 22岁',
+    desc: '复旦大学生，阳光开朗像小太阳。看似单纯实则成熟敏感，对你有真实好感。',
+    portrait: '/characters/xiaolu.jpg',
+    tags: ['阳光', '校园', '矛盾'],
+    color: '#00b894',
+  },
+  {
+    name: '陆沉舟', title: '神秘大叔 · 42岁',
+    desc: '神秘富豪，儒雅深沉看透一切。渴望被理解，在"客观性"和"真心"间挣扎。',
+    portrait: '/characters/chenzhou.jpg',
+    tags: ['神秘', '智慧', '孤独'],
+    color: '#74b9ff',
+  },
+]
 
-// ============================================================
-// 结局类型映射 — 消除 if/else 分支
-// ============================================================
+// ── Opening Screen ──────────────────────────────────
 
-const ENDING_TYPE_MAP: Record<string, { label: string; color: string; icon: string }> = {
-  TE: { label: '⭐ True Ending', color: '#ffd700', icon: '👑' },
-  HE: { label: '🎉 Happy Ending', color: '#e84393', icon: '🌟' },
-  BE: { label: '💀 Bad Ending', color: '#6b7280', icon: '💔' },
-  NE: { label: '🌙 Normal Ending', color: '#f59e0b', icon: '🌙' },
-}
-
-// ============================================================
-// 故事信息 — 用于开始画面
-// ============================================================
-
-const STORY_INFO = {
-  title: '镜花缘',
-  subtitle: '都市情感博弈交互叙事游戏',
-  intro: '你刚经历了一段五年的感情——未婚夫在婚礼前三个月劈腿。带着千疮百孔的心，你下载了高端交友APP「镜花缘」...',
-  objectives: [
-    '🌹 路线A·寻找真爱：找到那个"对的人"，让他敞开心扉',
-    '💰 路线B·情感投资：通过"情感操控"获取总价值50万的回报',
-    '🦋 路线C·自我救赎：不追求外部目标，治愈自己的内心创伤',
-  ],
-}
-
-// ============================================================
-// 开始界面 — 暗色都市情感风
-// ============================================================
-
-function StartScreen() {
-  const setPlayerInfo = useGameStore((s) => s.setPlayerInfo)
-  const initGame = useGameStore((s) => s.initGame)
-  const loadGame = useGameStore((s) => s.loadGame)
-  const hasSave = useGameStore((s) => s.hasSave)
-  const { toggle, isPlaying } = useBgm()
-
+function OpeningScreen({ onStart }: { onStart: (name: string) => void }) {
+  const [phase, setPhase] = useState<'landing' | 'profiles' | 'register'>('landing')
+  const [profileIdx, setProfileIdx] = useState(0)
+  const [profilesDone, setProfilesDone] = useState(false)
   const [name, setName] = useState('')
+  const hasSave = useGameStore((s) => s.hasSave)
+  const loadGame = useGameStore((s) => s.loadGame)
 
-  const handleStart = () => {
-    setPlayerInfo(name || '玩家')
-    initGame()
+  // Continue saved game
+  const handleContinue = useCallback(() => {
+    initBGM()
+    trackGameContinue()
+    loadGame()
+  }, [loadGame])
+
+  // Auto-advance profiles
+  useEffect(() => {
+    if (phase !== 'profiles' || profilesDone) return
+    if (profileIdx >= NPC_PROFILES.length) {
+      setProfilesDone(true)
+      return
+    }
+    const timer = setTimeout(() => setProfileIdx((i) => i + 1), 2500)
+    return () => clearTimeout(timer)
+  }, [phase, profileIdx, profilesDone])
+
+  // ── Phase 0: APP 启动画面 ──
+  if (phase === 'landing') {
+    return (
+      <div className="jh-landing">
+        <div className="jh-landing-glow" />
+
+        {/* 粒子 */}
+        <div className="jh-landing-particles">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div
+              key={i}
+              className="jh-landing-particle"
+              style={{
+                left: `${10 + Math.random() * 80}%`,
+                top: `${30 + Math.random() * 50}%`,
+                width: 2 + Math.random() * 3,
+                height: 2 + Math.random() * 3,
+                animationDelay: `${Math.random() * 5}s`,
+                animationDuration: `${3 + Math.random() * 4}s`,
+              }}
+            />
+          ))}
+        </div>
+
+        <motion.div
+          className="jh-landing-content"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+        >
+          <div className="jh-landing-line" />
+          <div className="jh-landing-logo">镜花缘</div>
+          <div className="jh-landing-sub">都 市 情 感 博 弈</div>
+          <div className="jh-landing-slogan">每个人都是一面镜子 · 你看到的只是你想看到的</div>
+          <div className="jh-landing-actions">
+            <button
+              className="jh-landing-start"
+              onClick={() => { initBGM(); setPhase('profiles') }}
+            >
+              开始游戏
+            </button>
+            {hasSave() && (
+              <button className="jh-landing-continue" onClick={handleContinue}>
+                继续游戏
+              </button>
+            )}
+          </div>
+        </motion.div>
+      </div>
+    )
   }
 
-  return (
-    <div className="flex h-screen items-center justify-center bg-gradient-to-br from-[#0d0d1a] via-[#1a1520] to-[#0d0d1a]">
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="w-full max-w-lg px-6 text-center"
-      >
-        {/* 标题 */}
-        <motion.div
-          initial={{ scale: 0.8 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.3, type: 'spring' }}
-          className="mb-6 text-5xl"
-        >
-          💋
-        </motion.div>
-        <h1 className="mb-2 text-2xl font-bold text-[#f0f0ff]">{STORY_INFO.title}</h1>
-        <p className="mb-1 text-sm text-[#e84393]/80">{STORY_INFO.subtitle}</p>
-        <p className="mb-8 text-xs leading-relaxed text-[#8888aa]">{STORY_INFO.intro}</p>
+  // ── Phase 1: NPC 档案卡片 ──
+  if (phase === 'profiles') {
+    const currentProfile = NPC_PROFILES[Math.min(profileIdx, NPC_PROFILES.length - 1)]
+    return (
+      <div className="jh-profiles">
+        {/* 跳过按钮 */}
+        <button className="jh-skip-btn" onClick={() => setPhase('register')}>跳过 ›</button>
 
-        {/* 名字输入 — 固定女性，无性别选择 */}
-        <div className="mb-6">
+        {/* APP 导航 */}
+        <div className="jh-profiles-nav">
+          <div className="jh-profiles-nav-logo">镜花缘</div>
+          <div className="jh-profiles-nav-hint">为你推荐</div>
+        </div>
+
+        {/* 卡片 */}
+        <div className="jh-profiles-stack">
+          <AnimatePresence mode="wait">
+            {profileIdx < NPC_PROFILES.length && (
+              <motion.div
+                key={profileIdx}
+                className="jh-profile-card"
+                initial={{ opacity: 0, scale: 0.95, x: 30 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.95, x: -30 }}
+                transition={{ duration: 0.4, type: 'spring', stiffness: 300, damping: 30 }}
+              >
+                <img
+                  className="jh-profile-card-img"
+                  src={currentProfile.portrait}
+                  alt={currentProfile.name}
+                />
+                <div className="jh-profile-card-overlay">
+                  <div className="jh-profile-card-name" style={{ color: currentProfile.color }}>
+                    {currentProfile.name}
+                  </div>
+                  <div className="jh-profile-card-title">{currentProfile.title}</div>
+                  <div className="jh-profile-card-desc">{currentProfile.desc}</div>
+                  <div className="jh-profile-card-tags">
+                    {currentProfile.tags.map((tag) => (
+                      <span key={tag} className="jh-profile-card-tag">{tag}</span>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* 进度点 */}
+        <div className="jh-profiles-dots">
+          {NPC_PROFILES.map((_, i) => (
+            <div
+              key={i}
+              className={`jh-profiles-dot ${i <= profileIdx ? 'jh-profiles-dot-active' : ''}`}
+            />
+          ))}
+        </div>
+
+        {/* CTA */}
+        {profilesDone && (
+          <motion.div
+            className="jh-profiles-cta-wrap"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <button
+              className="jh-profiles-cta"
+              onClick={() => setPhase('register')}
+            >
+              创建你的档案
+            </button>
+          </motion.div>
+        )}
+      </div>
+    )
+  }
+
+  // ── Phase 2: 玩家注册 ──
+  return (
+    <div className="jh-register">
+      {/* 粒子 */}
+      <div className="jh-register-particles">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div
+            key={i}
+            className="jh-register-spark"
+            style={{
+              left: `${10 + Math.random() * 80}%`,
+              top: `${50 + Math.random() * 40}%`,
+              width: 3 + Math.random() * 3,
+              height: 3 + Math.random() * 3,
+              animationDelay: `${Math.random() * 4}s`,
+              animationDuration: `${3 + Math.random() * 3}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* 注册卡片 */}
+      <motion.div
+        className="jh-register-card"
+        initial={{ opacity: 0, y: 30, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6, type: 'spring', stiffness: 200, damping: 20 }}
+      >
+        <div className="jh-register-header">
+          <div className="jh-register-title">镜花缘</div>
+          <div className="jh-register-subtitle">── 个人档案 ──</div>
+        </div>
+
+        <div className="jh-register-divider" />
+
+        <div className="jh-register-field">
+          <div className="jh-register-label">姓名</div>
           <input
-            type="text"
+            className="jh-register-input"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="你的名字..."
+            placeholder="在这里写下你的名字"
             maxLength={8}
-            className="w-full max-w-[240px] rounded-lg border px-4 py-2 text-center text-sm outline-none transition-all"
-            style={{
-              background: 'rgba(13, 13, 26, 0.8)',
-              borderColor: 'rgba(232, 67, 147, 0.25)',
-              color: '#f0f0ff',
-            }}
-            onFocus={(e) => { e.currentTarget.style.borderColor = '#e84393' }}
-            onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(232, 67, 147, 0.25)' }}
+            autoFocus
           />
         </div>
 
-        {/* NPC 预览 */}
-        <div className="mb-8 flex justify-center gap-4">
-          {NPC_PREVIEW.map((npc, i) => (
-            <motion.div
-              key={npc.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 + i * 0.1 }}
-              className="w-[72px] text-center"
-            >
-              <div
-                className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full text-lg shadow-lg"
-                style={{
-                  border: `2px solid ${npc.color}`,
-                  background: `${npc.color}18`,
-                }}
-              >
-                {npc.icon}
-              </div>
-              <div className="text-xs font-medium text-[#f0f0ff]">{npc.name}</div>
-              <div className="text-[10px] text-[#8888aa]">{npc.role}</div>
-            </motion.div>
-          ))}
+        <div className="jh-register-field">
+          <div className="jh-register-label">身份</div>
+          <div className="jh-register-value">28岁 · 前互联网公司市场总监</div>
         </div>
 
-        {/* 路线提示 */}
-        <div className="mb-6 text-left">
-          {STORY_INFO.objectives.map((obj) => (
-            <p key={obj} className="mb-1 text-[11px] leading-relaxed text-[#8888aa]">{obj}</p>
-          ))}
+        <div style={{ display: 'flex', gap: 16 }}>
+          <div className="jh-register-field" style={{ flex: 1 }}>
+            <div className="jh-register-label">城市</div>
+            <div className="jh-register-value">上海</div>
+          </div>
+          <div className="jh-register-field" style={{ flex: 1 }}>
+            <div className="jh-register-label">周期</div>
+            <div className="jh-register-value">30天</div>
+          </div>
         </div>
 
-        {/* 按钮组 */}
-        <div className="flex flex-col gap-3">
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={handleStart}
-            className="w-full rounded-full px-8 py-3 text-sm font-medium text-white shadow-lg transition-shadow"
-            style={{
-              background: 'linear-gradient(135deg, #e84393 0%, #c2185b 100%)',
-              boxShadow: '0 4px 16px rgba(232, 67, 147, 0.3)',
-            }}
-          >
-            进入镜花缘
-          </motion.button>
-
-          {hasSave() && (
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => loadGame()}
-              className="w-full rounded-full border px-8 py-3 text-sm font-medium transition-colors"
-              style={{
-                borderColor: 'rgba(232, 67, 147, 0.2)',
-                color: '#8888aa',
-              }}
-            >
-              继续游戏
-            </motion.button>
-          )}
+        <div className="jh-register-warn">
+          <span>⚠️</span>
+          <span>镜花缘APP会根据你的情感创伤类型，精准推送匹配对象。你看到的，只是你想看到的。</span>
         </div>
 
-        {/* 音乐按钮 */}
         <button
-          onClick={(e) => toggle(e)}
-          className="mt-4 text-xs text-[#555577] transition-colors hover:text-[#8888aa]"
+          className="jh-register-cta"
+          disabled={!name.trim()}
+          onClick={() => onStart(name.trim())}
         >
-          {isPlaying ? '🔊 音乐开' : '🔇 音乐关'}
+          进入镜花缘
         </button>
       </motion.div>
     </div>
   )
 }
 
-// ============================================================
-// 顶部状态栏 — 天数 + 时段 + 玩家属性 + 红包
-// ============================================================
-
-function HeaderBar({ onMenuClick }: { onMenuClick: () => void }) {
-  const currentDay = useGameStore((s) => s.currentDay)
-  const currentPeriodIndex = useGameStore((s) => s.currentPeriodIndex)
-  const playerStats = useGameStore((s) => s.playerStats)
-  const giftValue = useGameStore((s) => s.giftValue)
-  const { toggle, isPlaying } = useBgm()
-
-  const period = PERIODS[currentPeriodIndex]
-
-  return (
-    <header
-      className="relative z-10 flex min-h-[44px] items-center justify-between gap-2 px-4 py-2"
-      style={{ background: 'var(--bg-secondary)' }}
-    >
-      {/* 左侧：天数 + 时段 */}
-      <div className="flex items-center gap-3">
-        <span className="text-sm font-medium" style={{ color: 'var(--primary)' }}>
-          💋 第{currentDay}天/{MAX_DAYS}
-        </span>
-        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-          {period?.icon} {period?.name}
-        </span>
-      </div>
-
-      {/* 右侧：玩家属性 + 红包 + 音乐 + 菜单 */}
-      <div className="flex items-center gap-1">
-        {PLAYER_STAT_METAS.map((m) => (
-          <span
-            key={m.key}
-            className="rounded-md px-2 py-1 text-xs"
-            style={{ color: m.color }}
-            title={m.label}
-          >
-            {m.icon}{playerStats[m.key as keyof typeof playerStats]}
-          </span>
-        ))}
-
-        <span className="rounded-md px-2 py-1 text-xs" style={{ color: '#ffd700' }}>
-          💰¥{giftValue.toLocaleString()}
-        </span>
-
-        <button
-          onClick={(e) => toggle(e)}
-          className="rounded px-3 py-2 text-sm transition-all"
-          style={{ color: 'var(--text-muted)' }}
-          title={isPlaying ? '关闭音乐' : '开启音乐'}
-        >
-          {isPlaying ? '🔊' : '🔇'}
-        </button>
-
-        <button
-          onClick={onMenuClick}
-          className="rounded px-3 py-2 text-sm transition-all"
-          style={{ color: 'var(--text-muted)' }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(232,67,147,0.08)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-          title="菜单"
-        >
-          ☰
-        </button>
-      </div>
-    </header>
-  )
-}
-
-// ============================================================
-// 菜单弹窗
-// ============================================================
-
-function MenuOverlay({ onClose }: { onClose: () => void }) {
-  const saveGame = useGameStore((s) => s.saveGame)
-  const loadGame = useGameStore((s) => s.loadGame)
-  const resetGame = useGameStore((s) => s.resetGame)
-
-  return (
-    <div className="jh-overlay" onClick={onClose}>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="jh-modal"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2
-          style={{ color: 'var(--text-primary)', fontSize: 16, fontWeight: 600, margin: '0 0 16px', textAlign: 'center' }}
-        >
-          游戏菜单
-        </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <button className="jh-modal-btn" onClick={() => { saveGame(); onClose() }}>💾 保存游戏</button>
-          <button className="jh-modal-btn" onClick={() => { loadGame(); onClose() }}>📂 读取存档</button>
-          <button className="jh-modal-btn" onClick={() => resetGame()}>🏠 返回标题</button>
-          <button className="jh-modal-btn" onClick={() => window.open('https://yooho.ai/', '_blank')}>🌐 返回主页</button>
-          <button className="jh-modal-btn" onClick={onClose}>▶️ 继续游戏</button>
-        </div>
-      </motion.div>
-    </div>
-  )
-}
-
-// ============================================================
-// 结局弹窗 — 数据驱动，无 if/else
-// ============================================================
+// ── Ending Modal ────────────────────────────────────
 
 function EndingModal() {
   const endingType = useGameStore((s) => s.endingType)
   const resetGame = useGameStore((s) => s.resetGame)
+  const clearSave = useGameStore((s) => s.clearSave)
+
+  if (!endingType) return null
 
   const ending = ENDINGS.find((e) => e.id === endingType)
   if (!ending) return null
 
-  const meta = ENDING_TYPE_MAP[ending.type] ?? ENDING_TYPE_MAP.NE
+  const typeInfo = ENDING_TYPE_MAP[ending.type]
 
   return (
-    <div className="jh-ending-overlay">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.5, type: 'spring' }}
-        className="jh-ending-modal"
-      >
-        <div style={{ fontSize: 48, marginBottom: 16 }}>
-          {meta.icon}
-        </div>
-        <div style={{ fontSize: 12, fontWeight: 600, color: meta.color, marginBottom: 8, letterSpacing: 2 }}>
-          {meta.label}
-        </div>
-        <h2 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 16px', letterSpacing: 1 }}>
-          {ending.name}
-        </h2>
-        <p style={{ fontSize: 14, lineHeight: 1.8, color: 'var(--text-secondary)', marginBottom: 24 }}>
-          {ending.description}
-        </p>
-        <button
-          onClick={() => resetGame()}
-          style={{
-            padding: '10px 32px',
-            borderRadius: 99,
-            border: 'none',
-            background: 'linear-gradient(135deg, #e84393 0%, #c2185b 100%)',
-            color: 'white',
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(232, 67, 147, 0.3)',
-          }}
-        >
-          返回标题
-        </button>
-      </motion.div>
-    </div>
-  )
-}
-
-// ============================================================
-// 通知
-// ============================================================
-
-function Notification({ text, type }: { text: string; type: string }) {
-  return (
-    <div className={`jh-notification ${type}`}>
-      <span>{type === 'success' ? '✓' : type === 'error' ? '✕' : type === 'warning' ? '⚠' : 'ℹ'}</span>
-      <span>{text}</span>
-    </div>
-  )
-}
-
-// ============================================================
-// PC 游戏主屏幕 — 三栏布局
-// ============================================================
-
-function GameScreen() {
-  const [showMenu, setShowMenu] = useState(false)
-  const [notification, setNotification] = useState<{ text: string; type: string } | null>(null)
-  const endingType = useGameStore((s) => s.endingType)
-
-  const showNotif = useCallback((text: string, type = 'info') => {
-    setNotification({ text, type })
-    setTimeout(() => setNotification(null), 2000)
-  }, [])
-  void showNotif
-
-  return (
-    <div
-      className="flex h-screen flex-col"
-      style={{ background: 'var(--bg-secondary)', fontFamily: 'var(--font)' }}
+    <motion.div
+      className="jh-ending-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
     >
-      <HeaderBar onMenuClick={() => setShowMenu(true)} />
-
-      <main className="flex flex-1 overflow-hidden">
-        <aside className="w-[280px] shrink-0">
-          <LeftPanel />
-        </aside>
-        <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <DialoguePanel />
-        </section>
-        <aside className="shrink-0">
-          <RightPanel />
-        </aside>
-      </main>
-
-      <AnimatePresence>
-        {showMenu && <MenuOverlay onClose={() => setShowMenu(false)} />}
-      </AnimatePresence>
-
-      {endingType && <EndingModal />}
-
-      <AnimatePresence>
-        {notification && (
-          <motion.div
-            key="notif"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+      <motion.div
+        className="jh-ending-card"
+        style={{ background: typeInfo.gradient }}
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.3 }}
+      >
+        <div style={{ fontSize: 48, marginBottom: 12 }}>{ending.emoji}</div>
+        <div className="jh-ending-type">{typeInfo.label}</div>
+        <div className="jh-ending-title">{ending.title}</div>
+        <p className="jh-ending-desc">{ending.description}</p>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+          <button
+            className="jh-ending-btn"
+            onClick={() => { clearSave(); resetGame() }}
           >
-            <Notification text={notification.text} type={notification.type} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+            重新开始
+          </button>
+          <button
+            className="jh-ending-btn-secondary"
+            onClick={() => {
+              useGameStore.setState({ endingType: null })
+            }}
+          >
+            继续探索
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   )
 }
 
-// ============================================================
-// App 根组件
-// ============================================================
+// ── Menu Overlay ────────────────────────────────────
+
+function MenuOverlay({
+  show,
+  onClose,
+}: {
+  show: boolean
+  onClose: () => void
+}) {
+  const saveGame = useGameStore((s) => s.saveGame)
+  const loadGame = useGameStore((s) => s.loadGame)
+  const resetGame = useGameStore((s) => s.resetGame)
+  const clearSave = useGameStore((s) => s.clearSave)
+  const [toast, setToast] = useState('')
+
+  if (!show) return null
+
+  const handleSave = () => {
+    saveGame()
+    setToast('已保存')
+    setTimeout(() => setToast(''), 2000)
+  }
+
+  const handleLoad = () => {
+    if (loadGame()) {
+      onClose()
+    }
+  }
+
+  const handleReset = () => {
+    clearSave()
+    resetGame()
+    onClose()
+  }
+
+  return (
+    <motion.div
+      className="jh-menu-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="jh-menu-panel"
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>
+          {STORY_INFO.title}
+        </h3>
+        <button className="jh-menu-btn" onClick={handleSave}>保存进度</button>
+        <button className="jh-menu-btn" onClick={handleLoad}>读取存档</button>
+        <button className="jh-menu-btn jh-menu-danger" onClick={handleReset}>
+          重新开始
+        </button>
+        <button className="jh-menu-btn" onClick={onClose}>继续游戏</button>
+
+        {toast && <div className="jh-toast">{toast}</div>}
+      </motion.div>
+    </motion.div>
+  )
+}
+
+// ── App Root ────────────────────────────────────────
 
 export default function App() {
   const gameStarted = useGameStore((s) => s.gameStarted)
-  const isMobile = useIsMobile()
+  const setPlayerInfo = useGameStore((s) => s.setPlayerInfo)
+  const initGame = useGameStore((s) => s.initGame)
+  const [showMenu, setShowMenu] = useState(false)
+
+  const handleStart = (name: string) => {
+    trackGameStart()
+    setPlayerInfo(name)
+    initGame()
+  }
+
+  if (!gameStarted) {
+    return <OpeningScreen onStart={handleStart} />
+  }
 
   return (
-    <AnimatePresence mode="wait">
-      {gameStarted ? (
-        <motion.div
-          key="game"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="h-screen"
-        >
-          {isMobile ? <MobileGameLayout /> : <GameScreen />}
-        </motion.div>
-      ) : (
-        <motion.div key="start" exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-          <StartScreen />
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <>
+      <AppShell onMenuOpen={() => setShowMenu(true)} />
+      <EndingModal />
+      <AnimatePresence>
+        {showMenu && (
+          <MenuOverlay show={showMenu} onClose={() => setShowMenu(false)} />
+        )}
+      </AnimatePresence>
+    </>
   )
 }
