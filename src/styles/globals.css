@@ -748,3 +748,19 @@ body {
 .jh-slide-up { animation: jhSlideUp 0.4s ease-out; }
 .jh-pulse { animation: jhPulse 2s ease-in-out infinite; }
 .jh-float { animation: jhFloat 3s ease-in-out infinite; }
+
+/* ================================================================
+   私聊面板 Header
+   ================================================================ */
+
+.jh-chat-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
