@@ -112,7 +112,7 @@
 
 /* 副标题 */
 .jh-landing-sub {
-  font-size: 12px; letter-spacing: 12px;
+  font-size: 18px; letter-spacing: 10px;
   color: rgba(232, 67, 147, 0.7);
   text-shadow: 0 0 12px rgba(232, 67, 147, 0.3);
   margin-bottom: 12px;

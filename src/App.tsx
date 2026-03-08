@@ -108,7 +108,7 @@ function OpeningScreen({ onStart }: { onStart: (name: string) => void }) {
         >
           <div className="jh-landing-line" />
           <div className="jh-landing-logo">镜花缘</div>
-          <div className="jh-landing-sub">都 市 情 感 博 弈</div>
+          <div className="jh-landing-sub">网 恋 杀 猪 盘 实 录</div>
           <div className="jh-landing-slogan">每个人都是一面镜子 · 你看到的只是你想看到的</div>
           <div className="jh-landing-actions">
             <button
